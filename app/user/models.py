@@ -35,7 +35,7 @@ class UserManager(BaseUserManager):
         superuser.set_password(password)
         superuser.is_staff = True
         superuser.is_superuser = True
-        superuser.save(using=self._db)
+        superuser.save()
         return superuser
 
 
@@ -44,7 +44,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=100, blank=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

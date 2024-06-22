@@ -18,8 +18,8 @@ class AuthAPITests(TestCase):
         # Client to simulate requests
         self.client = APIClient()
 
-    def test_create_user(self):
-        """Test user creating"""
+    def test_register_user(self):
+        """Test user creation"""
         payload = {
             "email": "test@example.com",
             "password": "testpass",
