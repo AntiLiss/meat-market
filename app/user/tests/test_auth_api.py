@@ -49,19 +49,6 @@ class AuthAPITests(TestCase):
         user_count = get_user_model().objects.filter(email=payload["email"]).count()
         self.assertEqual(user_count, 1)
 
-    def test_password_too_short_error(self):
-        """Test password shorter than 6 returns error"""
-        payload = {
-            "email": "test@example.com",
-            "password": "12",
-        }
-        res = self.client.post(CREATE_USER_URL, payload)
-
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        # Ensure the user is not created
-        user_exists = get_user_model().objects.filter(email=payload["email"]).exists()
-        self.assertFalse(user_exists)
-
     def test_generate_user_token(self):
         """Test user token creation"""
         # Firstly manually create a user

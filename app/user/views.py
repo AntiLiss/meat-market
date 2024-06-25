@@ -4,13 +4,13 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authentication import TokenAuthentication
 from .serializers import AuthTokenSeralizer
-from user.serializers import UserSerializer
+from user.serializers import UserSerializer, CustomerProfileSerializer
 
 
 class RegisterUserView(CreateAPIView):
     """Manage user creation"""
 
-    serializer_class = UserSerializer
+    serializer_class = CustomerProfileSerializer
 
 
 class ObtainTokenView(ObtainAuthToken):
