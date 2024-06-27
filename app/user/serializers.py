@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.authentication import authenticate
-from user.models import Address, CustomerProfile
+from user.models import ShippingAddress, Profile
 
 
 class AuthTokenSeralizer(serializers.Serializer):
@@ -25,8 +25,39 @@ class AuthTokenSeralizer(serializers.Serializer):
         return attrs
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """User model serializer"""
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    """Customers's shipping address serializer"""
+
+    class Meta:
+        model = ShippingAddress
+        fields = [
+            "country",
+            "city",
+            "street",
+            "house",
+            "apartment",
+            "postal_code",
+            "latitude",
+            "longtitude",
+        ]
+        read_only_fields = ["user"]
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """Customer profile serializer"""
+
+    class Meta:
+        model = Profile
+        fields = [
+            "first_name",
+            "last_name",
+            "telephone",
+            "profile_photo",
+        ]
+
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for user register"""
 
     class Meta:
         model = get_user_model()
@@ -37,85 +68,29 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        """Create user with hashing password"""
         return get_user_model().objects.create_user(**validated_data)
 
-    def update(self, instance, validated_data):
-        """Update user with hashing password"""
-        password = validated_data.pop("password", None)
-        super().update(instance, validated_data)
 
+class UserSerializer(UserRegisterSerializer):
+    """Detailed user serializer"""
+
+    profile = ProfileSerializer()
+    # shipping_address = ShippingAddressSerializer()
+
+    class Meta(UserRegisterSerializer.Meta):
+        model = get_user_model()
+        fields = UserRegisterSerializer.Meta.fields + ["profile"]
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        profile_data = validated_data.pop("profile", None)
+        address_data = validated_data.pop("shipping_address", None)
+        super().update(instance, validated_data)
         # Set password with hashing if it's provided and save the object
         if password:
             instance.set_password(password)
-            instance.save()
+        if profile_data:
+            Profile.objects.filter(user=instance).update(**profile_data)
 
+        instance.save()
         return instance
-
-
-class AddressSerializer(serializers.ModelSerializer):
-    """Customers's shipping address serializer"""
-
-    class Meta:
-        model = Address
-        fields = ["country", "city", "street_address", "postal_code"]
-
-
-# class CustomerRegisterSerializer(serializers.ModelSerializer):
-#     """CustomerProfile serializer without address fields"""
-
-#     user = UserSerializer()
-
-#     class Meta:
-#         model = CustomerProfile
-#         fields = ["user", "phone"]
-
-#     def create(self, validated_data):
-#         """Create CustomerProfile with necessary fields"""
-#         user_data = validated_data.pop("user", None)
-#         address_data = validated_data.pop("address", None)
-
-#         # Create first a User to whom the CustomerProfile will link
-#         user = get_user_model().objects.create_user(**user_data)
-#         # If address data provided link CustomerProfile to the address
-#         if address_data:
-#             # Create new address or get existing one
-#             address, created = Address.objects.get_or_create(**address_data)
-
-#         profile = CustomerProfile.objects.create(
-#             user=user,
-#             **validated_data,
-#         )
-#         return profile
-
-
-class CustomerProfileSerializer(serializers.ModelSerializer):
-    """Customer serializer with additional fields"""
-
-    user = UserSerializer()
-    # Make it's possible to don't include `address` field
-    address = AddressSerializer(required=False)
-
-    class Meta:
-        model = CustomerProfile
-        fields = ["user", "phone", "address"]
-
-    def create(self, validated_data):
-        """Create CustomerProfile with necessary fields"""
-        user_data = validated_data.pop("user", None)
-        address_data = validated_data.pop("address", None)
-
-        # Create first a User to whom the CustomerProfile will link
-        user = get_user_model().objects.create_user(**user_data)
-
-        profile = CustomerProfile.objects.create(
-            user=user,
-            **validated_data,
-        )
-        # If address data provided link CustomerProfile to the address
-        if address_data:
-            # Create new address or get existing one
-            address, created = Address.objects.get_or_create(**address_data)
-            profile.address = address
-            profile.save()
-        return profile

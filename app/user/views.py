@@ -4,13 +4,13 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authentication import TokenAuthentication
 from .serializers import AuthTokenSeralizer
-from user.serializers import UserSerializer, CustomerProfileSerializer
+from user.serializers import UserSerializer, UserRegisterSerializer
 
 
 class RegisterUserView(CreateAPIView):
     """Manage user creation"""
 
-    serializer_class = CustomerProfileSerializer
+    serializer_class = UserRegisterSerializer
 
 
 class ObtainTokenView(ObtainAuthToken):
@@ -28,3 +28,5 @@ class ProfileRUDView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         return self.request.user
+
+# class ProfileView(generics.cre)

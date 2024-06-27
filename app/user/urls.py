@@ -8,5 +8,6 @@ app_name = "user"
 urlpatterns = [
     path("register/", views.RegisterUserView.as_view(), name="register"),
     path("token/", views.ObtainTokenView.as_view(), name="token"),
+    # path('profile/')
     path("me/", views.ProfileRUDView.as_view(), name="me"),
 ]

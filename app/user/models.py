@@ -20,18 +20,15 @@ class UserManager(BaseUserManager):
     """User model manager"""
 
     def create_user(self, email, password=None, **fields):
-        """Create and return user with customer permissions"""
-
         user = self.model(
             email=self.normalize_email(email),
             **fields,
         )
-        user.set_password(password)  # Set password separately with hashing
-        user.save(using=self._db)
+        user.set_password(password)
+        user.save()
         return user
 
     def create_superuser(self, email, password=None, **fields):
-        """Create and return user with admin permissions"""
         superuser = self.model(
             email=self.normalize_email(email),
             **fields,
@@ -44,13 +41,9 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """User (admin/customer) model"""
-
-    first_name = models.CharField(max_length=70, blank=True)
-    last_name = models.CharField(max_length=70, blank=True)
     email = models.EmailField(max_length=255, unique=True)
 
-    date_joined = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     is_staff = models.BooleanField(default=False)
@@ -62,36 +55,31 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
-class AdminProfile(models.Model):
-    """Admin profile for super user"""
+class Profile(models.Model):
+    """Customer profile model"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    username = models.CharField(max_length=50, unique=True)
-
-
-class CustomerProfile(models.Model):
-    """Customer profile for regular user"""
-
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
-    phone = models.CharField(max_length=50, unique=True)
+    first_name = models.CharField(max_length=70, blank=True)
+    last_name = models.CharField(max_length=70, blank=True)
+    telephone = models.CharField(max_length=50, unique=True)
     profile_photo = models.ImageField(
         upload_to=generate_user_image_path, blank=True, null=True
     )
-    address = models.ForeignKey(
-        to="Address",
-        blank=True,
-        null=True,
-        on_delete=models.SET_NULL,
-    )
 
 
-class Address(models.Model):
+class ShippingAddress(models.Model):
     """Customer's shipping address"""
 
-    country = models.CharField(max_length=50)
-    city = models.CharField(max_length=50)
-    street_address = models.CharField(
-        max_length=150,
-        help_text="The combination of the street name, house number and apartment",
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    country = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    street = models.CharField(max_length=100)
+    house = models.CharField(max_length=30)
+    apartment = models.CharField(max_length=20, blank=True)
+    postal_code = models.CharField(max_length=30)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
     )
-    postal_code = models.CharField(max_length=50)
+    longtitude = models.DecimalField(
+        max_digits=9, decimal_places=6, blank=True, null=True
+    )
