@@ -31,6 +31,7 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingAddress
         fields = [
+            "user",
             "country",
             "city",
             "street",
@@ -49,15 +50,17 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
+            "user",
             "first_name",
             "last_name",
             "telephone",
             "profile_photo",
         ]
+        read_only_fields = ["user"]
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    """Lightweight serializer for user register"""
+    """User credentials serializer for register"""
 
     class Meta:
         model = get_user_model()
@@ -75,22 +78,7 @@ class UserSerializer(UserRegisterSerializer):
     """Detailed user serializer"""
 
     profile = ProfileSerializer()
-    # shipping_address = ShippingAddressSerializer()
+    shipping_address = ShippingAddressSerializer()
 
     class Meta(UserRegisterSerializer.Meta):
-        model = get_user_model()
-        fields = UserRegisterSerializer.Meta.fields + ["profile"]
-
-    def update(self, instance, validated_data):
-        password = validated_data.pop("password", None)
-        profile_data = validated_data.pop("profile", None)
-        address_data = validated_data.pop("shipping_address", None)
-        super().update(instance, validated_data)
-        # Set password with hashing if it's provided and save the object
-        if password:
-            instance.set_password(password)
-        if profile_data:
-            Profile.objects.filter(user=instance).update(**profile_data)
-
-        instance.save()
-        return instance
+        fields = UserRegisterSerializer.Meta.fields + ["profile", "shipping_address"]

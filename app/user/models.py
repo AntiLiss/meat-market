@@ -42,11 +42,11 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
+    is_staff = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    is_staff = models.BooleanField(default=False)
     USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"
     objects = UserManager()
@@ -56,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Profile(models.Model):
-    """Customer profile model"""
+    """User's profile model"""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     first_name = models.CharField(max_length=70, blank=True)
@@ -66,11 +66,19 @@ class Profile(models.Model):
         upload_to=generate_user_image_path, blank=True, null=True
     )
 
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
 
 class ShippingAddress(models.Model):
-    """Customer's shipping address"""
+    """User's shipping address"""
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name="shipping_address",
+    )
     country = models.CharField(max_length=100)
     city = models.CharField(max_length=100)
     street = models.CharField(max_length=100)
@@ -83,3 +91,40 @@ class ShippingAddress(models.Model):
     longtitude = models.DecimalField(
         max_digits=9, decimal_places=6, blank=True, null=True
     )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+# class Cart(models.Model):
+#     """User's cart model"""
+
+#     user = models.OneToOneField(
+#         to=get_user_model(),
+#         on_delete=models.CASCADE,
+#         primary_key=True,
+#     )
+
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+
+# class CartItem(models.Model):
+#     """Cart item model"""
+
+#     cart = models.ForeignKey(to=Cart, on_delete=models.CASCADE)
+#     product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
+#     quantity = models.IntegerField(validators=[MinValueValidator(1)])
+
+
+# class WishItem(models.Model):
+#     user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
+#     # product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
+
+#     class Meta:
+#         constraints = [
+#             # Ensure the user can wish the product only once
+#             models.UniqueConstraint(
+#                 fields=["user", "product"], name="unique_user_product"
+#             )
+#         ]
