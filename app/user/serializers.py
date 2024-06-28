@@ -20,7 +20,7 @@ class AuthTokenSeralizer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError("Incorrect credentials!")
 
-        # If the user exists add him to validated data of the serializer
+        # If the user exists add him to validated data
         attrs["user"] = user
         return attrs
 
