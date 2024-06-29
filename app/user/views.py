@@ -28,7 +28,7 @@ class ObtainTokenView(ObtainAuthToken):
     serializer_class = AuthTokenSeralizer
 
 
-class ReadDeleteUserView(
+class UserReadDeleteView(
     generics.RetrieveAPIView,
     generics.DestroyAPIView,
 ):
@@ -42,7 +42,7 @@ class ReadDeleteUserView(
         return self.request.user
 
 
-class CredentialsRUDView(
+class CredentialsReadUpdateView(
     generics.RetrieveAPIView,
     generics.UpdateAPIView,
 ):

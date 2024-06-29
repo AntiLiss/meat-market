@@ -30,7 +30,7 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShippingAddress
-        fields = [
+        fields = (
             "user",
             "country",
             "city",
@@ -40,8 +40,8 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
             "postal_code",
             "latitude",
             "longtitude",
-        ]
-        read_only_fields = ["user"]
+        )
+        read_only_fields = ("user",)
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -49,14 +49,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [
+        fields = (
             "user",
             "first_name",
             "last_name",
             "telephone",
             "profile_photo",
-        ]
-        read_only_fields = ["user"]
+        )
+        read_only_fields = ("user",)
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -64,7 +64,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ["id", "email", "password"]
+        fields = ("id", "email", "password")
         extra_kwargs = {
             "id": {"read_only": True},
             "password": {"write_only": True},
@@ -81,4 +81,4 @@ class UserSerializer(UserRegisterSerializer):
     shipping_address = ShippingAddressSerializer()
 
     class Meta(UserRegisterSerializer.Meta):
-        fields = UserRegisterSerializer.Meta.fields + ["profile", "shipping_address"]
+        fields = UserRegisterSerializer.Meta.fields + ("profile", "shipping_address")

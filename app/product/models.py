@@ -40,6 +40,21 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     brand = models.CharField(max_length=100, blank=True)
+    qty_in_stock = models.IntegerField(
+        verbose_name="Количество на складе",
+        validators=[MinValueValidator(0)],
+    )
+    properties = models.JSONField(
+        blank=True,
+        default=dict,
+        validators=[validate_unique_keys],
+        verbose_name="Дополнительные свойства",
+    )
+    rating = models.FloatField(
+        blank=True,
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(5)],
+    )
     price = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -51,21 +66,6 @@ class Product(models.Model):
         blank=True,
         null=True,
     )
-    qty_in_stock = models.IntegerField(
-        verbose_name="Количество на складе",
-        validators=[MinValueValidator(0)],
-    )
-
-    rating = models.FloatField(
-        blank=True,
-        default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(5)],
-    )
-    properties = models.JSONField(
-        blank=True,
-        default=dict,
-        validators=[validate_unique_keys],
-    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -73,11 +73,11 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    def get_final_price(self):
+    def calculate_final_price(self):
         """Get the price after discount"""
         if self.discount and self.discount.is_current():
             discount_amount = (self.price / 100) * self.discount.discount_percent
-            return self.price - discount_amount
+            return round((self.price - discount_amount), 2)
 
         return self.price
 
@@ -85,7 +85,11 @@ class Product(models.Model):
 class ProductImage(models.Model):
     """Product's image model"""
 
-    product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        to=Product,
+        on_delete=models.CASCADE,
+        related_name="images",
+    )
     image = models.ImageField(
         upload_to=generate_product_image_path,
         blank=True,
@@ -102,7 +106,7 @@ class ProductDiscount(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     discount_percent = models.DecimalField(
-        max_digits=3,
+        max_digits=4,
         decimal_places=1,
         validators=[MinValueValidator(1), MaxValueValidator(100)],
     )

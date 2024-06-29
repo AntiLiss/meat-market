@@ -5,8 +5,8 @@ from .views import (
     ObtainTokenView,
     ProfileCRUDView,
     AddressCRUDView,
-    CredentialsRUDView,
-    ReadDeleteUserView,
+    CredentialsReadUpdateView,
+    UserReadDeleteView,
 )
 
 app_name = "user"
@@ -20,8 +20,8 @@ urlpatterns = [
     # path("", include(router.urls)),
     path("me/shipping-address/", AddressCRUDView.as_view(), name="shipping-address"),
     path("me/profile/", ProfileCRUDView.as_view(), name="profile"),
-    path("me/credentials/", CredentialsRUDView.as_view(), name="credentials"),
-    path("me/", ReadDeleteUserView.as_view(), name="user-details"),
-    path("register/", RegisterUserView.as_view(), name="register"),
+    path("me/credentials/", CredentialsReadUpdateView.as_view(), name="credentials"),
+    path("me/", UserReadDeleteView.as_view(), name="user-details"),
     path("token/", ObtainTokenView.as_view(), name="token"),
+    path("register/", RegisterUserView.as_view(), name="register"),
 ]
