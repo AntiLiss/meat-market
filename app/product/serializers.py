@@ -1,5 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from .models import Category, Product, ProductImage, ProductDiscount
+from rest_framework.exceptions import ValidationError
+from .models import Category, Product, ProductImage, ProductDiscount, Review
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,7 +25,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     # Images related to the product
     images = ProductImageSerializer(many=True)
-    # Extra field with price after discount
+    # Price after discount
     final_price = serializers.SerializerMethodField()
 
     class Meta:
@@ -63,3 +65,31 @@ class ProductDiscountSerializer(serializers.ModelSerializer):
             "end_date",
             "is_active",
         )
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """Review serializer"""
+
+    class Meta:
+        model = Review
+        fields = (
+            "id",
+            "user",
+            "product",
+            "rating",
+            "text",
+            "updated_at",
+        )
+        read_only_fields = ("id", "user", "product")
+
+    # Handle `unique_user_product_review` violation
+    def create(self, validated_data):
+        this_user = self.context.get("request").user
+        product_id = self.context["view"].kwargs.get("product_pk")
+        product = get_object_or_404(Product, pk=product_id)
+        # Error if the user tries to create another review for the same product
+        if Review.objects.filter(user=this_user, product=product):
+            error = "You have already written a review for this product!"
+            raise ValidationError(error)
+
+        return super().create(validated_data)

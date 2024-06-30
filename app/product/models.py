@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
 
 
 def generate_product_image_path(instance, filename):
@@ -124,3 +125,27 @@ class ProductDiscount(models.Model):
         """Check if the discount is currently active"""
         today = date.today()
         return self.is_active and self.start_date <= today < self.end_date
+
+
+class Review(models.Model):
+    """Review model"""
+
+    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
+    product = models.ForeignKey(
+        to=Product, on_delete=models.CASCADE, related_name="reviews"
+    )
+    rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    text = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            # Ensure user can leave only 1 review for the product
+            models.UniqueConstraint(
+                fields=["user", "product"], name="unique_user_product_review"
+            )
+        ]

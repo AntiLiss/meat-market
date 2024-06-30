@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "django_filters",
     "core",
     "user",
-    "product",
+    "product.apps.ProductConfig",
 ]
 
 MIDDLEWARE = [
