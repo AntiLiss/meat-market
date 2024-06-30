@@ -86,10 +86,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         this_user = self.context.get("request").user
         product_id = self.context["view"].kwargs.get("product_pk")
-        product = get_object_or_404(Product, pk=product_id)
         # Error if the user tries to create another review for the same product
-        if Review.objects.filter(user=this_user, product=product):
+        if Review.objects.filter(user=this_user, product=product_id):
             error = "You have already written a review for this product!"
-            raise ValidationError(error)
+            raise ValidationError({'detail': error})
 
         return super().create(validated_data)

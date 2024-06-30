@@ -117,14 +117,17 @@ class ShippingAddress(models.Model):
 #     quantity = models.IntegerField(validators=[MinValueValidator(1)])
 
 
-# class WishItem(models.Model):
-#     user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
-#     # product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
+class WishItem(models.Model):
+    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
+    product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
 
-#     class Meta:
-#         constraints = [
-#             # Ensure the user can wish the product only once
-#             models.UniqueConstraint(
-#                 fields=["user", "product"], name="unique_user_product"
-#             )
-#         ]
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            # Prohibit a user to wish the same product again
+            models.UniqueConstraint(
+                fields=["user", "product"], name="unique_user_product"
+            )
+        ]

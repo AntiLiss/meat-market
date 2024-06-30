@@ -38,12 +38,23 @@ class ProductDiscountViewSet(ReadOnlyModelViewSet):
     ordering_fields = ["created_at"]
 
 
-class ReviewListView(generics.ListCreateAPIView):
-    """Review listing and creation"""
+class ReviewMixin:
+    """Basic features for review views"""
 
     authentication_classes = [TokenAuthentication]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+
+    def get_permissions(self):
+        # Require authorization when write operation
+        if self.request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
+
+
+class ReviewListView(ReviewMixin, generics.ListCreateAPIView):
+    """Review listing and creation"""
+
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["created_at", "updated_at", "rating"]
     ordering = ["-updated_at"]
@@ -54,12 +65,6 @@ class ReviewListView(generics.ListCreateAPIView):
         # Limit reviews to contextual product
         return self.queryset.filter(product=product)
 
-    def get_permissions(self):
-        # Allow only authenticated user to create review
-        if self.request.method == "POST":
-            return [permissions.IsAuthenticated()]
-        return super().get_permissions()
-
     def perform_create(self, serializer):
         # Set `user` to this user and `product` to this product
         product_id = self.kwargs.get("product_pk")
@@ -67,21 +72,11 @@ class ReviewListView(generics.ListCreateAPIView):
         return serializer.save(user=self.request.user, product=product)
 
 
-class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+class ReviewDetailView(ReviewMixin, generics.RetrieveUpdateDestroyAPIView):
     """Review detail read, update and delete operations"""
-
-    authentication_classes = [TokenAuthentication]
-    queryset = Review.objects.all()
-    serializer_class = ReviewSerializer
 
     def get_queryset(self):
         # Allow user to edit only his reviews
         if self.request.method in ["PUT", "PATCH", "DELETE"]:
             return self.queryset.filter(user=self.request.user)
         return super().get_queryset()
-
-    def get_permissions(self):
-        # Allow only authenticated user to edit review
-        if self.request.method in ["PUT", "PATCH", "DELETE"]:
-            return [permissions.IsAuthenticated()]
-        return super().get_permissions()

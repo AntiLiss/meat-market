@@ -1,6 +1,8 @@
 from rest_framework import generics
 from rest_framework import permissions
 from rest_framework import status
+from rest_framework import viewsets
+from rest_framework import mixins
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView
@@ -12,8 +14,9 @@ from .serializers import (
     AuthTokenSeralizer,
     ShippingAddressSerializer,
     ProfileSerializer,
+    WishItemSerializer,
 )
-from .models import Profile, ShippingAddress
+from .models import Profile, ShippingAddress, WishItem
 
 
 class RegisterUserView(CreateAPIView):
@@ -120,3 +123,30 @@ class ProfileCRUDView(
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().create(request, *args, **kwargs)
+
+
+class WhishItemMixin:
+    """Basic features for whish item views"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    queryset = WishItem.objects.all()
+    serializer_class = WishItemSerializer
+
+    def get_queryset(self):
+        # Limit whishes to the current user
+        return self.queryset.filter(user=self.request.user)
+
+
+class WhishItemListView(WhishItemMixin, generics.ListCreateAPIView):
+    """Manage wish item create, list ops"""
+
+    def perform_create(self, serializer):
+        # Set `user` to this user
+        return serializer.save(user=self.request.user)
+
+
+class WishItemDetailView(WhishItemMixin, generics.RetrieveDestroyAPIView):
+    """Manage wish item retrieve, destroy ops"""
+
+    pass

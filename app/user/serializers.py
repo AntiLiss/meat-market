@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import authenticate
-from user.models import ShippingAddress, Profile
+from .models import ShippingAddress, Profile, WishItem
 
 
 class AuthTokenSeralizer(serializers.Serializer):
@@ -82,3 +83,22 @@ class UserSerializer(UserRegisterSerializer):
 
     class Meta(UserRegisterSerializer.Meta):
         fields = UserRegisterSerializer.Meta.fields + ("profile", "shipping_address")
+
+
+class WishItemSerializer(serializers.ModelSerializer):
+    """Wish item serializer"""
+
+    class Meta:
+        model = WishItem
+        fields = ("id", "user", "product")
+        read_only_fields = ("id", "user")
+
+    def create(self, validated_data):
+        this_user = self.context.get("request").user
+        product_id = self.validated_data.get("product")
+        # Error if the user tries to wish the same product again
+        if WishItem.objects.filter(user=this_user, product=product_id):
+            error = "You have already wished this product!"
+            raise ValidationError({'detail': error})
+
+        return super().create(validated_data)
