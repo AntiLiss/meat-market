@@ -4,11 +4,10 @@ from django.db.models.signals import post_save, post_delete
 from .models import Review
 
 
-@receiver(post_save, sender=Review)
-@receiver(post_delete, sender=Review)
+@receiver([post_save, post_delete], sender=Review)
 def update_product_rating(sender, instance, **kwargs):
     """
-    Update the product rating whenever a review for it is saved or deleted
+    Update the product rating whenever a review for it saved or deleted
     """
     product = instance.product
     reviews = product.reviews.all()

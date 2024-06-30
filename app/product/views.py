@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import filters
-from rest_framework import permissions
+from rest_framework import filters, permissions, generics
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.authentication import TokenAuthentication
 from django_filters.rest_framework import DjangoFilterBackend
@@ -39,8 +38,8 @@ class ProductDiscountViewSet(ReadOnlyModelViewSet):
     ordering_fields = ["created_at"]
 
 
-class ReviewViewSet(ModelViewSet):
-    """Manage review CRUD operations"""
+class ReviewListView(generics.ListCreateAPIView):
+    """Review listing and creation"""
 
     authentication_classes = [TokenAuthentication]
     queryset = Review.objects.all()
@@ -53,17 +52,11 @@ class ReviewViewSet(ModelViewSet):
         product_id = self.kwargs.get("product_pk")
         product = get_object_or_404(Product, pk=product_id)
         # Limit reviews to contextual product
-        queryset = self.queryset.filter(product=product)
-
-        # Limit reviews to user when write operations
-        if self.action in ["update", "partial_update", "destroy"]:
-            return queryset.filter(user=self.request.user)
-
-        return queryset
+        return self.queryset.filter(product=product)
 
     def get_permissions(self):
-        # Allow only authenticated user to make write operations
-        if self.action not in ["list", "retrieve"]:
+        # Allow only authenticated user to create review
+        if self.request.method == "POST":
             return [permissions.IsAuthenticated()]
         return super().get_permissions()
 
@@ -72,3 +65,23 @@ class ReviewViewSet(ModelViewSet):
         product_id = self.kwargs.get("product_pk")
         product = get_object_or_404(Product, pk=product_id)
         return serializer.save(user=self.request.user, product=product)
+
+
+class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Review detail read, update and delete operations"""
+
+    authentication_classes = [TokenAuthentication]
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+    def get_queryset(self):
+        # Allow user to edit only his reviews
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return self.queryset.filter(user=self.request.user)
+        return super().get_queryset()
+
+    def get_permissions(self):
+        # Allow only authenticated user to edit review
+        if self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return [permissions.IsAuthenticated()]
+        return super().get_permissions()
