@@ -20,6 +20,8 @@ def generate_user_image_path(instance, filename):
 class UserManager(BaseUserManager):
     """User model manager"""
 
+    # TODO: UserManager doesn't work when creating user via admin panel.
+    # It saves user WITHOUT HASHING PASSWORD. Fix!
     def create_user(self, email, password=None, **fields):
         user = self.model(
             email=self.normalize_email(email),
@@ -97,6 +99,22 @@ class ShippingAddress(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+class WishItem(models.Model):
+    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
+    product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            # Prohibit a user to wish the same product again
+            models.UniqueConstraint(
+                fields=["user", "product"], name="unique_user_product"
+            )
+        ]
+
+
 class Cart(models.Model):
     """User's cart model"""
 
@@ -135,18 +153,10 @@ class CartItem(models.Model):
         """
         return round(self.product.calculate_final_price() * self.quantity, 2)
 
-
-class WishItem(models.Model):
-    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
-    product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
     class Meta:
         constraints = [
-            # Prohibit a user to wish the same product again
+            # Restrict a user to add the same product to the cart again
             models.UniqueConstraint(
-                fields=["user", "product"], name="unique_user_product"
+                fields=["cart", "product"], name="unique_cart_product"
             )
         ]

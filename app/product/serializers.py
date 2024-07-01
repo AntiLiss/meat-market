@@ -82,7 +82,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "user", "product")
 
-    # Handle `unique_user_product_review` violation
+    # Handle `unique_user_product_review` constraint violation
     def create(self, validated_data):
         this_user = self.context.get("request").user
         product_id = self.context["view"].kwargs.get("product_pk")

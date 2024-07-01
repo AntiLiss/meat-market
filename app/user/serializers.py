@@ -113,14 +113,32 @@ class CartSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    """Cart item serializer for CRUD operations"""
+    """Cart item serializer for CRD operations"""
 
     total_cost = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ("cart", "product", "quantity", "total_cost")
-        read_only_fields = ("cart",)
+        fields = ("id", "cart", "product", "quantity", "total_cost")
+        read_only_fields = ("id", "cart")
 
     def get_total_cost(self, obj):
         return obj.get_total_cost()
+
+    # Handle `unique_cart_product` constraint violation
+    def create(self, validated_data):
+        cart_id = validated_data.get("cart")
+        product_id = validated_data.get("product")
+        # Error if the user tries to add the same product to cart again
+        if CartItem.objects.filter(cart=cart_id, product=product_id):
+            error = "You have already added this item to your cart!"
+            raise ValidationError({"detail": error})
+        return super().create(validated_data)
+
+
+class CartItemUpdateSerializer(CartItemSerializer):
+    """Cart item serializer for update operations"""
+
+    class Meta(CartItemSerializer.Meta):
+        # Make `product` field unable to update
+        read_only_fields = CartItemSerializer.Meta.read_only_fields + ("product",)

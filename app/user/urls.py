@@ -10,15 +10,17 @@ from .views import (
     WhishItemListView,
     WishItemDetailView,
     CartDetailView,
+    CartItemViewSet,
 )
 
 app_name = "user"
 
 router = DefaultRouter()
-router.register('cart-items', ..., 'cart-item')
+router.register("cart-items", CartItemViewSet, "cart-item")
 
 
 urlpatterns = [
+    path("", include(router.urls)),
     path(
         "me/wishitems/<int:pk>/", WishItemDetailView.as_view(), name="wishitem-detail"
     ),

@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "django_filters",
     "core",
-    "user",
+    "user.apps.UserConfig",
     "product.apps.ProductConfig",
 ]
 

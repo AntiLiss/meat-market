@@ -144,7 +144,7 @@ class Review(models.Model):
 
     class Meta:
         constraints = [
-            # Prohibit a user to write more than 1 review per product
+            # Restrict a user to write more than 1 review per product
             models.UniqueConstraint(
                 fields=["user", "product"], name="unique_user_product_review"
             )

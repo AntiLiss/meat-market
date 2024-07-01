@@ -17,6 +17,7 @@ from .serializers import (
     WishItemSerializer,
     CartSerializer,
     CartItemSerializer,
+    CartItemUpdateSerializer,
 )
 from .models import Profile, ShippingAddress, WishItem, CartItem
 
@@ -162,6 +163,7 @@ class CartDetailView(generics.RetrieveAPIView):
     serializer_class = CartSerializer
 
     def get_object(self):
+        # NOTE: if the user has no cart there will be an error
         return self.request.user.cart
 
 
@@ -176,6 +178,12 @@ class CartItemViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Limit cart items to this user's cart
         return self.queryset.filter(cart=self.request.user.cart)
+
+    def get_serializer_class(self):
+        # Use serializer with uneditable `product` field when update action
+        if self.action in ["update", "partial_update"]:
+            return CartItemUpdateSerializer
+        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         # Assign cart items to this user's cart
