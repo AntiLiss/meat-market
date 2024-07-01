@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import authenticate
-from .models import ShippingAddress, Profile, WishItem
+from .models import ShippingAddress, Profile, WishItem, Cart, CartItem
 
 
 class AuthTokenSeralizer(serializers.Serializer):
@@ -99,6 +99,28 @@ class WishItemSerializer(serializers.ModelSerializer):
         # Error if the user tries to wish the same product again
         if WishItem.objects.filter(user=this_user, product=product_id):
             error = "You have already wished this product!"
-            raise ValidationError({'detail': error})
+            raise ValidationError({"detail": error})
 
         return super().create(validated_data)
+
+
+class CartSerializer(serializers.ModelSerializer):
+    """Cart serializer for reading"""
+
+    class Meta:
+        model = Cart
+        fields = ("user", "total")
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    """Cart item serializer for CRUD operations"""
+
+    total_cost = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ("cart", "product", "quantity", "total_cost")
+        read_only_fields = ("cart",)
+
+    def get_total_cost(self, obj):
+        return obj.get_total_cost()

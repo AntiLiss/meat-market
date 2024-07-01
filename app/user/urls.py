@@ -9,9 +9,13 @@ from .views import (
     UserReadDeleteView,
     WhishItemListView,
     WishItemDetailView,
+    CartDetailView,
 )
 
 app_name = "user"
+
+router = DefaultRouter()
+router.register('cart-items', ..., 'cart-item')
 
 
 urlpatterns = [
@@ -27,6 +31,7 @@ urlpatterns = [
         name="credentials",
     ),
     path("me/", UserReadDeleteView.as_view(), name="user-details"),
+    path("cart/", CartDetailView.as_view(), name="cart"),
     path("token/", ObtainTokenView.as_view(), name="token"),
     path("register/", RegisterUserView.as_view(), name="register"),
 ]

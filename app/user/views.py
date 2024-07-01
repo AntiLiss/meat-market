@@ -15,8 +15,10 @@ from .serializers import (
     ShippingAddressSerializer,
     ProfileSerializer,
     WishItemSerializer,
+    CartSerializer,
+    CartItemSerializer,
 )
-from .models import Profile, ShippingAddress, WishItem
+from .models import Profile, ShippingAddress, WishItem, CartItem
 
 
 class RegisterUserView(CreateAPIView):
@@ -150,3 +152,31 @@ class WishItemDetailView(WhishItemMixin, generics.RetrieveDestroyAPIView):
     """Manage wish item retrieve, destroy ops"""
 
     pass
+
+
+class CartDetailView(generics.RetrieveAPIView):
+    """Manage user's cart retrieving"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    serializer_class = CartSerializer
+
+    def get_object(self):
+        return self.request.user.cart
+
+
+class CartItemViewSet(viewsets.ModelViewSet):
+    """Manage CRUD operations on cart items"""
+
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+
+    def get_queryset(self):
+        # Limit cart items to this user's cart
+        return self.queryset.filter(cart=self.request.user.cart)
+
+    def perform_create(self, serializer):
+        # Assign cart items to this user's cart
+        return serializer.save(cart=self.request.user.cart)

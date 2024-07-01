@@ -2,6 +2,7 @@ import os
 from uuid import uuid4
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -96,25 +97,43 @@ class ShippingAddress(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
-# class Cart(models.Model):
-#     """User's cart model"""
+class Cart(models.Model):
+    """User's cart model"""
 
-#     user = models.OneToOneField(
-#         to=get_user_model(),
-#         on_delete=models.CASCADE,
-#         primary_key=True,
-#     )
+    user = models.OneToOneField(
+        to=get_user_model(),
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    total = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        default=0,
+    )
 
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
-# class CartItem(models.Model):
-#     """Cart item model"""
+class CartItem(models.Model):
+    """Cart item model"""
 
-#     cart = models.ForeignKey(to=Cart, on_delete=models.CASCADE)
-#     product = models.ForeignKey(to=Product, on_delete=models.CASCADE)
-#     quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    cart = models.ForeignKey(
+        to=Cart, on_delete=models.CASCADE, related_name="cart_items"
+    )
+    product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
+    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_total_cost(self):
+        """
+        Get the total cost of the cart item taking into account
+        its quantity and discount.
+        """
+        return round(self.product.calculate_final_price() * self.quantity, 2)
 
 
 class WishItem(models.Model):
