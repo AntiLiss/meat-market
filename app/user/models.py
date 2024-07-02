@@ -20,8 +20,6 @@ def generate_user_image_path(instance, filename):
 class UserManager(BaseUserManager):
     """User model manager"""
 
-    # TODO: UserManager doesn't work when creating user via admin panel.
-    # It saves user WITHOUT HASHING PASSWORD. Fix!
     def create_user(self, email, password=None, **fields):
         user = self.model(
             email=self.normalize_email(email),
@@ -43,6 +41,8 @@ class UserManager(BaseUserManager):
         return superuser
 
 
+# TODO: Replace with `AbstractUser` to ensure correct password encryption
+# when creating users via admin panel
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
     is_staff = models.BooleanField(default=False)

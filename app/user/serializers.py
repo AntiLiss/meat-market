@@ -127,10 +127,10 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     # Handle `unique_cart_product` constraint violation
     def create(self, validated_data):
-        cart_id = validated_data.get("cart")
+        cart = validated_data.get("cart")
         product_id = validated_data.get("product")
         # Error if the user tries to add the same product to cart again
-        if CartItem.objects.filter(cart=cart_id, product=product_id):
+        if CartItem.objects.filter(cart=cart, product=product_id):
             error = "You have already added this item to your cart!"
             raise ValidationError({"detail": error})
         return super().create(validated_data)
