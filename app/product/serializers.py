@@ -85,9 +85,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     # Handle `unique_user_product_review` constraint violation
     def create(self, validated_data):
         this_user = self.context.get("request").user
-        product = validated_data.get("product")
+        product_id = self.context["views"].kwargs.get("product_pk")
         # Error if the user tries to create another review for the same product
-        if Review.objects.filter(user=this_user, product=product):
+        if Review.objects.filter(user=this_user, product=product_id):
             error = "You have already written a review for this product!"
             raise ValidationError({"detail": error})
 

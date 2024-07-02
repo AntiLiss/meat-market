@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "core",
     "user.apps.UserConfig",
     "product.apps.ProductConfig",
+    "order",
 ]
 
 MIDDLEWARE = [
@@ -137,6 +138,13 @@ MEDIA_ROOT = "/vol/web/media"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # Configure pagination
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
+}
 
 # Change user model to custom one
 AUTH_USER_MODEL = "user.User"

@@ -57,7 +57,7 @@ class Product(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
     price = models.DecimalField(
-        max_digits=15,
+        max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(1)],
     )
