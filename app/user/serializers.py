@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.authentication import authenticate
 from .models import ShippingAddress, Profile, WishItem, Cart, CartItem
+from product.models import Product
 
 
 class AuthTokenSeralizer(serializers.Serializer):
@@ -116,6 +117,8 @@ class CartItemSerializer(serializers.ModelSerializer):
     """Cart item serializer for CRD operations"""
 
     total_cost = serializers.SerializerMethodField()
+    # Get Product object from foreign key field `product`
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
     class Meta:
         model = CartItem
@@ -125,12 +128,27 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_total_cost(self, obj):
         return obj.get_total_cost()
 
+    # Ensure cart item quantity doesn't exceed product's stock
+    def validate(self, attrs):
+        quantity = attrs.get("quantity")
+        # If the serializer is using for update then
+        # take `product` from existing cart item
+        if self.instance:
+            product = self.instance.product
+        else:
+            product = attrs.get("product")
+
+        if quantity and quantity > product.qty_in_stock:
+            error = f"You can not buy more than we have! ({quantity} > {product.qty_in_stock})"
+            raise ValidationError(error)
+        return attrs
+
     # Handle `unique_cart_product` constraint violation
     def create(self, validated_data):
         cart = self.context["request"].user.cart
-        product_id = validated_data.get("product")
+        product = validated_data.get("product")
         # Error if the user tries to add the same product to cart again
-        if CartItem.objects.filter(cart=cart, product=product_id):
+        if CartItem.objects.filter(cart=cart, product=product):
             error = "You have already added this item to your cart!"
             raise ValidationError({"detail": error})
         return super().create(validated_data)
@@ -139,6 +157,5 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartItemUpdateSerializer(CartItemSerializer):
     """Cart item serializer for update operations"""
 
-    class Meta(CartItemSerializer.Meta):
-        # Make `product` field unable to update
-        read_only_fields = CartItemSerializer.Meta.read_only_fields + ("product",)
+    # Make `product` field unable to update
+    product = serializers.PrimaryKeyRelatedField(read_only=True)

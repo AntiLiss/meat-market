@@ -3,6 +3,7 @@ from uuid import uuid4
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -141,7 +142,7 @@ class CartItem(models.Model):
         to=Cart, on_delete=models.CASCADE, related_name="cart_items"
     )
     product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(1)], default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -158,5 +159,17 @@ class CartItem(models.Model):
             # Restrict a user to add the same product to the cart again
             models.UniqueConstraint(
                 fields=["cart", "product"], name="unique_cart_product"
-            )
+            ),
         ]
+
+    def clean(self):
+        # Validate the quantity does not exceed product's stock
+        if self.quantity > self.product.qty_in_stock:
+            raise ValidationError(
+                f"You cannot buy more than we have! ({self.quantity} > {self.product.qty_in_stock})"
+            )
+
+    def save(self, *args, **kwargs):
+        # Call clean to enforce validation
+        self.clean()
+        super().save(*args, **kwargs)

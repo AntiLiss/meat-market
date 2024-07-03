@@ -6,16 +6,9 @@ from django.core.validators import MinValueValidator
 class Order(models.Model):
     """Order model"""
 
-    user = models.OneToOneField(
-        to=get_user_model(), on_delete=models.CASCADE, primary_key=True
-    )
+    user = models.ForeignKey(to=get_user_model(), on_delete=models.CASCADE)
     shipping_address = models.ForeignKey(
         to="user.ShippingAddress",
-        on_delete=models.SET_NULL,
-        null=True,
-    )
-    payment = models.ForeignKey(
-        to="Payment",
         on_delete=models.SET_NULL,
         null=True,
     )
@@ -25,6 +18,7 @@ class Order(models.Model):
         validators=[MinValueValidator(0)],
         default=0,
     )
+    is_paid = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -37,7 +31,7 @@ class OrderItem(models.Model):
         to=Order, on_delete=models.CASCADE, related_name="order_items"
     )
     product = models.ForeignKey(to="product.Product", on_delete=models.CASCADE)
-    quantity = models.IntegerField(validators=[MinValueValidator(1)])
+    quantity = models.IntegerField(validators=[MinValueValidator(1)], default=1)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -58,25 +52,25 @@ class OrderItem(models.Model):
         ]
 
 
-class Payment(models.Model):
-    """Payment model"""
+# class Payment(models.Model):
+#     """Payment model"""
 
-    # Payment status choices
-    PENDING = "P"
-    COMPLETED = "C"
-    FAILED = "F"
-    STATUS_CHOICES = (
-        (PENDING, _("pending")),
-        (COMPLETED, _("completed")),
-        (FAILED, _("failed")),
-    )
+#     # Payment status choices
+#     PENDING = "P"
+#     COMPLETED = "C"
+#     FAILED = "F"
+#     STATUS_CHOICES = (
+#         (PENDING, "pending"),
+#         (COMPLETED, "completed"),
+#         (FAILED, "failed"),
+#     )
 
-    # Payment provider choices
-    STRIPE = "S"
-    PROVIDER_CHOICES = ((STRIPE, "stripe"),)
+#     # Payment provider choices
+#     STRIPE = "S"
+#     PROVIDER_CHOICES = ((STRIPE, "stripe"),)
 
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
-    provider = models.CharField(max_length=1, choices=PROVIDER_CHOICES)
+#     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+#     provider = models.CharField(max_length=1, choices=PROVIDER_CHOICES)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
