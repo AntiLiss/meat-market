@@ -34,8 +34,9 @@ class ProductDiscountViewSet(ReadOnlyModelViewSet):
 
     queryset = ProductDiscount.objects.all()
     serializer_class = ProductDiscountSerializer
-    filter_backends = [filters.OrderingFilter]
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = ["created_at"]
+    search_fields = ["name"]
 
 
 class ReviewMixin:

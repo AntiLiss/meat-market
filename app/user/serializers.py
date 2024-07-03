@@ -131,8 +131,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     # Ensure cart item quantity doesn't exceed product's stock
     def validate(self, attrs):
         quantity = attrs.get("quantity")
-        # If the serializer is using for update then
-        # take `product` from existing cart item
+        # Use `product` of existing cart item when update
         if self.instance:
             product = self.instance.product
         else:

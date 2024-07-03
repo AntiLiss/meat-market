@@ -17,8 +17,9 @@ class Order(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         default=0,
+        blank=True,
     )
-    is_paid = models.BooleanField(default=False)
+    is_paid = models.BooleanField(default=False, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -129,6 +129,7 @@ class Cart(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(0)],
         default=0,
+        blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -162,14 +163,18 @@ class CartItem(models.Model):
             ),
         ]
 
-    def clean(self):
-        # Validate the quantity does not exceed product's stock
-        if self.quantity > self.product.qty_in_stock:
-            raise ValidationError(
-                f"You cannot buy more than we have! ({self.quantity} > {self.product.qty_in_stock})"
-            )
+    # NOTE: This validation leads to 500 error when I:
+    # 1) Create cart_item with quantity 50 when product is 100
+    # 2) Reduce product quantity to 10 in admin panel
+    # 3) Try so send empty PATCH method (so I save instance as is)
+    # def clean(self):
+    #     # Validate the quantity does not exceed product's stock
+    #     if self.quantity > self.product.qty_in_stock:
+    #         raise ValidationError(
+    #             f"You cannot buy more than we have! ({self.quantity} > {self.product.qty_in_stock})"
+    #         )
 
-    def save(self, *args, **kwargs):
-        # Call clean to enforce validation
-        self.clean()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     # Call clean to enforce validation
+    #     self.clean()
+    #     super().save(*args, **kwargs)
