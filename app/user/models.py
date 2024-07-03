@@ -124,16 +124,14 @@ class Cart(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
     )
-    total = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        default=0,
-        blank=True,
-    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def get_total_amount(self):
+        """Get total amount for all cart items"""
+        total_amount = sum(item.get_total_cost() for item in self.cart_items.all())
+        return round(total_amount, 2)
 
 
 class CartItem(models.Model):
@@ -163,18 +161,14 @@ class CartItem(models.Model):
             ),
         ]
 
-    # NOTE: This validation leads to 500 error when I:
-    # 1) Create cart_item with quantity 50 when product is 100
-    # 2) Reduce product quantity to 10 in admin panel
-    # 3) Try so send empty PATCH method (so I save instance as is)
-    # def clean(self):
-    #     # Validate the quantity does not exceed product's stock
-    #     if self.quantity > self.product.qty_in_stock:
-    #         raise ValidationError(
-    #             f"You cannot buy more than we have! ({self.quantity} > {self.product.qty_in_stock})"
-    #         )
+    def clean(self):
+        # Validate the quantity does not exceed product's stock
+        if self.quantity > self.product.qty_in_stock:
+            raise ValidationError(
+                f"You cannot buy more than we have! ({self.quantity} > {self.product.qty_in_stock})"
+            )
 
-    # def save(self, *args, **kwargs):
-    #     # Call clean to enforce validation
-    #     self.clean()
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # Call clean to enforce validation
+        self.clean()
+        super().save(*args, **kwargs)

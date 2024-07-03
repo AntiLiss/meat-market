@@ -9,15 +9,3 @@ def create_cart_for_user(sender, instance, created, **kwargs):
     """Create a cart for the new user"""
     if created:
         Cart.objects.create(user=instance)
-
-
-@receiver([post_save, post_delete], sender=CartItem)
-def update_cart_total(sender, instance, **kwargs):
-    """
-    Update cart's total whenever a cart item for it is
-    created, updated or deleted
-    """
-    cart = instance.cart
-    total = sum(item.get_total_cost() for item in cart.cart_items.all())
-    cart.total = round(total, 2)
-    cart.save()

@@ -96,9 +96,10 @@ class WishItemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         this_user = self.context.get("request").user
-        product_id = self.validated_data.get("product")
+        product = self.validated_data.get("product")
+
         # Error if the user tries to wish the same product again
-        if WishItem.objects.filter(user=this_user, product=product_id):
+        if WishItem.objects.filter(user=this_user, product=product):
             error = "You have already wished this product!"
             raise ValidationError({"detail": error})
 
@@ -108,17 +109,20 @@ class WishItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     """Cart serializer for reading"""
 
+    total_amount = serializers.SerializerMethodField()
+
     class Meta:
         model = Cart
-        fields = ("user", "total")
+        fields = ("user", "total_amount")
+
+    def get_total_amount(self, obj):
+        return obj.get_total_amount()
 
 
 class CartItemSerializer(serializers.ModelSerializer):
     """Cart item serializer for CRD operations"""
 
     total_cost = serializers.SerializerMethodField()
-    # Get Product object from foreign key field `product`
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
     class Meta:
         model = CartItem
@@ -128,33 +132,46 @@ class CartItemSerializer(serializers.ModelSerializer):
     def get_total_cost(self, obj):
         return obj.get_total_cost()
 
-    # Ensure cart item quantity doesn't exceed product's stock
     def validate(self, attrs):
-        quantity = attrs.get("quantity")
-        # Use `product` of existing cart item when update
-        if self.instance:
-            product = self.instance.product
+        # Validation for create operation
+        if not self.instance:
+            self._validate_unique_cart_product(attrs)
+            self._validate_quantity_in_stock(attrs)
+        # Validation for update operation
         else:
-            product = attrs.get("product")
+            self._validate_quantity_in_stock(attrs, is_update=True)
 
-        if quantity and quantity > product.qty_in_stock:
-            error = f"You can not buy more than we have! ({quantity} > {product.qty_in_stock})"
-            raise ValidationError(error)
         return attrs
 
-    # Handle `unique_cart_product` constraint violation
-    def create(self, validated_data):
+    def _validate_quantity_in_stock(self, attrs, is_update=False):
+        """Ensure `cart_item.quantity` doesn't exceed product's stock"""
+        if not is_update:
+            product = attrs.get("product")
+            quantity = attrs.get("quantity")
+        else:
+            # Use `product` of existing cart item when update
+            product = self.instance.product
+            # If `quantity` not provided when update action then
+            # take existing quantity value
+            quantity = attrs.get("quantity") or self.instance.quantity
+
+        if quantity > product.qty_in_stock:
+            error = f"Out of stock! ({quantity} > {product.qty_in_stock})"
+            raise ValidationError(error)
+
+    def _validate_unique_cart_product(self, attrs):
+        """Ensure the product is not already in the user's cart"""
         cart = self.context["request"].user.cart
-        product = validated_data.get("product")
+        product = attrs.get("product")
         # Error if the user tries to add the same product to cart again
         if CartItem.objects.filter(cart=cart, product=product):
             error = "You have already added this item to your cart!"
             raise ValidationError({"detail": error})
-        return super().create(validated_data)
 
 
 class CartItemUpdateSerializer(CartItemSerializer):
     """Cart item serializer for update operations"""
 
-    # Make `product` field unable to update
-    product = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta(CartItemSerializer.Meta):
+        # Make `product` field uneditable
+        read_only_fields = CartItemSerializer.Meta.read_only_fields + ("product",)

@@ -24,9 +24,14 @@ class ProductViewSet(ReadOnlyModelViewSet):
 
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+        filters.SearchFilter,
+    ]
     ordering_fields = ["created_at", "price", "rating"]
-    filterset_fields = ["category"]  # Fields to filter by
+    filterset_fields = ["category"]
+    search_fields = ["name"]
 
 
 class ProductDiscountViewSet(ReadOnlyModelViewSet):
@@ -34,9 +39,8 @@ class ProductDiscountViewSet(ReadOnlyModelViewSet):
 
     queryset = ProductDiscount.objects.all()
     serializer_class = ProductDiscountSerializer
-    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    filter_backends = [filters.OrderingFilter]
     ordering_fields = ["created_at"]
-    search_fields = ["name"]
 
 
 class ReviewMixin:

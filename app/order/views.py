@@ -22,7 +22,7 @@ class OrderViewSet(
 ):
     """Manage CRD ops on order"""
 
-    permission_classes = [IsAuthenticated, DoesUserHaveAddress, IsCartNotEmpty]
+    permission_classes = [IsAuthenticated, DoesUserHaveAddress]
     authentication_classes = [TokenAuthentication]
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -34,3 +34,11 @@ class OrderViewSet(
         if self.action == "destroy":
             return queryset.filter(is_paid=False)
         return queryset
+
+    def get_permissions(self):
+        # Require items to be in cart for order creation
+        if self.action == "create":
+            return [permission() for permission in self.permission_classes] + [
+                IsCartNotEmpty()
+            ]
+        return super().get_permissions()
