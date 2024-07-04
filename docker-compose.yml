@@ -8,6 +8,8 @@ services:
     volumes:
       - ./app:/app
       - static-data:/vol/web
+    env_file:
+      - .env
     environment:
       - DB_HOST=db
       - DB_NAME=devdb

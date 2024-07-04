@@ -47,3 +47,6 @@ class OrderSerializer(serializers.ModelSerializer):
             raise ValidationError(error)
 
         return order
+
+class PaymentCreateSerializer(serializers.Serializer):
+    return_url = serializers.URLField()

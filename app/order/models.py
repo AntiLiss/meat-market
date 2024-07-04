@@ -52,29 +52,29 @@ class OrderItem(models.Model):
         ]
 
 
-class Payment(models.Model):
-    """Payment model"""
+# class Payment(models.Model):
+#     """Payment model"""
 
-    # Payment status choices
-    PENDING = "P"
-    COMPLETED = "C"
-    FAILED = "F"
-    STATUS_CHOICES = (
-        (PENDING, "pending"),
-        (COMPLETED, "completed"),
-        (FAILED, "failed"),
-    )
+#     # Payment status choices
+#     PENDING = "P"
+#     COMPLETED = "C"
+#     FAILED = "F"
+#     STATUS_CHOICES = (
+#         (PENDING, "pending"),
+#         (COMPLETED, "completed"),
+#         (FAILED, "failed"),
+#     )
 
-    order = models.OneToOneField(to=Order, on_delete=models.CASCADE)
-    amount = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        validators=[MinValueValidator(0)],
-        default=0,
-    )
-    currency = models.CharField(max_length=3, default="RUB", blank=True)
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
-    payment_method = models.CharField(max_length=100, blank=True)
+#     order = models.OneToOneField(to=Order, on_delete=models.CASCADE)
+#     amount = models.DecimalField(
+#         max_digits=15,
+#         decimal_places=2,
+#         validators=[MinValueValidator(0)],
+#         default=0,
+#     )
+#     currency = models.CharField(max_length=3, default="RUB", blank=True)
+#     status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+#     payment_method = models.CharField(max_length=100, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
