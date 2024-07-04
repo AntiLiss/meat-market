@@ -143,6 +143,15 @@ class CartItemSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def _validate_unique_cart_product(self, attrs):
+        """Ensure the product is not already in the user's cart"""
+        cart = self.context["request"].user.cart
+        product = attrs.get("product")
+        # Error if the user tries to add the same product to cart again
+        if CartItem.objects.filter(cart=cart, product=product):
+            error = "You have already added this item to your cart!"
+            raise ValidationError({"detail": error})
+
     def _validate_quantity_in_stock(self, attrs, is_update=False):
         """Ensure `cart_item.quantity` doesn't exceed product's stock"""
         if not is_update:
@@ -158,15 +167,6 @@ class CartItemSerializer(serializers.ModelSerializer):
         if quantity > product.qty_in_stock:
             error = f"Out of stock! ({quantity} > {product.qty_in_stock})"
             raise ValidationError(error)
-
-    def _validate_unique_cart_product(self, attrs):
-        """Ensure the product is not already in the user's cart"""
-        cart = self.context["request"].user.cart
-        product = attrs.get("product")
-        # Error if the user tries to add the same product to cart again
-        if CartItem.objects.filter(cart=cart, product=product):
-            error = "You have already added this item to your cart!"
-            raise ValidationError({"detail": error})
 
 
 class CartItemUpdateSerializer(CartItemSerializer):

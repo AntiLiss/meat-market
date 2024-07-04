@@ -23,7 +23,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
         quantity_exceed_errors = {}
         # Create order items based on cart items
-        # TODO: Make this work in admin panel too!
+        # TODO: Make this work in admin panel too! (maybe use signal?)
         for item in user.cart.cart_items.all():
             # Accumulate quantity exceed errors if they are
             if item.quantity > item.product.qty_in_stock:
