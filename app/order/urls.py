@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import OrderViewSet, PaymentCreateView, PaymentAcceptView
+from .views import OrderViewSet, PaymentCreateView, YookassaWebhookView
 
 app_name = "order"
 
@@ -14,6 +14,6 @@ urlpatterns = [
         PaymentCreateView.as_view(),
         name="pay",
     ),
-    path("payment-webhook/", PaymentAcceptView.as_view(), name='payment-webhook'),
+    path("yookassa-webhooks/", YookassaWebhookView.as_view(), name='yookassa-webhooks'),
     path("", include(router.urls)),
 ]

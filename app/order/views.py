@@ -1,8 +1,6 @@
-import os
-import uuid
-import yookassa
-import json
+import uuid, yookassa
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import filters
 from rest_framework.mixins import (
@@ -17,9 +15,19 @@ from rest_framework.generics import CreateAPIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .models import Order
+from .models import Order, Payment
 from .serializers import OrderSerializer, PaymentCreateSerializer
-from .permissions import DoesUserHaveAddress, IsCartNotEmpty, IsOrderNotPaid
+from .permissions import (
+    DoesUserHaveAddress,
+    IsCartNotEmpty,
+    IsOrderNotPaid,
+    IsAllowedIP,
+)
+
+
+# Set Yookassa credentials
+yookassa.Configuration.account_id = settings.YOOKASSA_ACCOUNT_ID
+yookassa.Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
 
 
 class OrderViewSet(
@@ -57,24 +65,24 @@ class OrderViewSet(
         return super().get_permissions()
 
 
-yookassa.Configuration.account_id = os.environ.get("YOOKASSA_ACCOUNT_ID")
-yookassa.Configuration.secret_key = os.environ.get("YOOKASSA_SECRET_KEY")
-
-
 class PaymentCreateView(APIView):
-    """Manage payment creation"""
+    """Create Yookassa payment object and Payment model instance"""
 
     permission_classes = [IsAuthenticated, IsOrderNotPaid]
     authentication_classes = [TokenAuthentication]
     serializer_class = PaymentCreateSerializer
 
     def post(self, request, order_pk):
-        order = get_object_or_404(Order, pk=order_pk)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return_url = serializer.validated_data.get("return_url")
+        # Limit orders to this user so the user can pay only for his orders
+        user_orders = Order.objects.filter(user=request.user)
+        order = get_object_or_404(user_orders, pk=order_pk)
+        # Create Yookassa payment object
         payment = yookassa.Payment.create(
             {
+                # TODO: include commission to amount
                 "amount": {
                     "value": order.total,
                     "currency": "RUB",
@@ -89,20 +97,38 @@ class PaymentCreateView(APIView):
             },
             uuid.uuid4(),
         )
-        return Response(payment)
+        # Delete existing pending payment for the order, if present
+        if Payment.objects.filter(order=order):
+            Payment.objects.filter(order=order).delete()
+        # Create Payment model instance
+        Payment.objects.create(order=order, amount=order.total)
+
+        # TODO: Change response body for swagger
+        return Response(payment.confirmation, status=201)
 
 
-class PaymentAcceptView(APIView):
-    """Modify order depending on the payment status"""
+class YookassaWebhookView(APIView):
+    """Modify order and payment based on the payment status"""
+
+    permission_classes = [IsAllowedIP]
 
     def post(self, request):
-        notification = json.loads(request.body)
-        # If payment succeeded mark the order as paid
-        if notification["event"] == "payment.succeeded":
-            order_id = notification["object"]["metadata"]["order_id"]
-            order = get_object_or_404(Order, pk=order_id)
-            order.is_paid = True
-            order.save()
+        print(request.META.get("REMOTE_ADDR"))
+        print(request.META.get("HTTP_X_FORWARDED_FOR"))
+        order_id = request.data["object"]["metadata"]["order_id"]
+        order = get_object_or_404(Order, pk=order_id)
+        payment = get_object_or_404(Payment, order=order)
 
-        print(notification)
+        # Mark payment and order as succeeded if payment succeeded
+        if request.data["event"] == "payment.succeeded":
+            payment.status = payment.SUCCEEDED
+            payment.payment_method = request.data["object"]["payment_method"]["type"]
+            order.is_paid = True
+        # Mark payment  as canceled if payment canceled
+        elif request.data["event"] == "payment.canceled":
+            payment.status = payment.CANCELED
+
+        payment.save()
+        order.save()
+
         return Response(status=200)
