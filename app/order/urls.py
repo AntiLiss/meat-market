@@ -12,8 +12,8 @@ urlpatterns = [
     path(
         "orders/<int:order_pk>/create-payment/",
         PaymentCreateView.as_view(),
-        name="pay",
+        name="create-payment",
     ),
-    path("yookassa-webhooks/", YookassaWebhookView.as_view(), name='yookassa-webhooks'),
     path("", include(router.urls)),
+    path("yookassa-webhooks/", YookassaWebhookView.as_view(), name='yookassa-webhooks'),
 ]

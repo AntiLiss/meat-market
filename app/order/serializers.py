@@ -48,5 +48,14 @@ class OrderSerializer(serializers.ModelSerializer):
 
         return order
 
-class PaymentCreateSerializer(serializers.Serializer):
+
+class YookassaPaymentRequestSerializer(serializers.Serializer):
+    """Serializer for yookassa payment creation"""
+
     return_url = serializers.URLField()
+
+
+class YookassaPaymentResponseSerializer(serializers.Serializer):
+    """Serializer for confirmation url return"""
+
+    confirmation_url = serializers.URLField()

@@ -9,8 +9,8 @@ urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema")),
     path("api/user/", include("user.urls")),
-    path("api/product/", include("product.urls")),
-    path("api/order/", include("order.urls")),
+    path("api/", include("product.urls")),
+    path("api/", include("order.urls")),
 ]
 
 # Add url to serve media files when debug mode

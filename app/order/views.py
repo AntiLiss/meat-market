@@ -1,5 +1,6 @@
 import uuid, yookassa
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework import filters
@@ -16,7 +17,11 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from .models import Order, Payment
-from .serializers import OrderSerializer, PaymentCreateSerializer
+from .serializers import (
+    OrderSerializer,
+    YookassaPaymentRequestSerializer,
+    YookassaPaymentResponseSerializer,
+)
 from .permissions import (
     DoesUserHaveAddress,
     IsCartNotEmpty,
@@ -70,8 +75,12 @@ class PaymentCreateView(APIView):
 
     permission_classes = [IsAuthenticated, IsOrderNotPaid]
     authentication_classes = [TokenAuthentication]
-    serializer_class = PaymentCreateSerializer
+    serializer_class = YookassaPaymentRequestSerializer
 
+    @extend_schema(
+        # Change serializer for responses
+        responses=YookassaPaymentResponseSerializer,
+    )
     def post(self, request, order_pk):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -97,6 +106,11 @@ class PaymentCreateView(APIView):
             },
             uuid.uuid4(),
         )
+
+        yookassa_confirmation_url = YookassaPaymentResponseSerializer(
+            payment.confirmation
+        ).data
+
         # Delete existing pending payment for the order, if present
         if Payment.objects.filter(order=order):
             Payment.objects.filter(order=order).delete()
@@ -104,7 +118,7 @@ class PaymentCreateView(APIView):
         Payment.objects.create(order=order, amount=order.total)
 
         # TODO: Change response body for swagger
-        return Response(payment.confirmation, status=201)
+        return Response(yookassa_confirmation_url, status=201)
 
 
 class YookassaWebhookView(APIView):
@@ -113,8 +127,6 @@ class YookassaWebhookView(APIView):
     permission_classes = [IsAllowedIP]
 
     def post(self, request):
-        print(request.META.get("REMOTE_ADDR"))
-        print(request.META.get("HTTP_X_FORWARDED_FOR"))
         order_id = request.data["object"]["metadata"]["order_id"]
         order = get_object_or_404(Order, pk=order_id)
         payment = get_object_or_404(Payment, order=order)
