@@ -69,6 +69,15 @@ class OrderViewSet(
             ]
         return super().get_permissions()
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Set default values for order
+        return serializer.save(
+            user=user,
+            shipping_address=user.shipping_address,
+            total=user.cart.get_total_amount(),
+        )
+
 
 class PaymentCreateView(APIView):
     """Create Yookassa payment object and Payment model instance"""
@@ -116,8 +125,7 @@ class PaymentCreateView(APIView):
             Payment.objects.filter(order=order).delete()
         # Create Payment model instance
         Payment.objects.create(order=order, amount=order.total)
-
-        # TODO: Change response body for swagger
+        print(payment.__dict__)
         return Response(yookassa_confirmation_url, status=201)
 
 

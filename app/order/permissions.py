@@ -56,7 +56,7 @@ class IsAllowedIP(BasePermission):
     ]
 
     def has_permission(self, request, view):
-        # Extract the IP from the X-Forwarded-For header, if present
+        # If X-Forwarded-For header is present, extract the IP from it
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
 
         if x_forwarded_for:

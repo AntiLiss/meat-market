@@ -45,6 +45,7 @@ class Product(models.Model):
         verbose_name="Количество на складе",
         validators=[MinValueValidator(0)],
     )
+    # TODO: Make more user friendly input in admin panel
     properties = models.JSONField(
         blank=True,
         default=dict,
