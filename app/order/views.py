@@ -125,7 +125,6 @@ class PaymentCreateView(APIView):
             Payment.objects.filter(order=order).delete()
         # Create Payment model instance
         Payment.objects.create(order=order, amount=order.total)
-        print(payment.__dict__)
         return Response(yookassa_confirmation_url, status=201)
 
 

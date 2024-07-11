@@ -159,7 +159,6 @@ class CartDetailView(generics.RetrieveAPIView):
     serializer_class = CartSerializer
 
     def get_object(self):
-        # NOTE: if the user has no cart there will be an error
         return self.request.user.cart
 
 
