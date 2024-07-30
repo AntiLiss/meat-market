@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
@@ -71,24 +72,20 @@ class AddressCRUDView(
     serializer_class = ShippingAddressSerializer
 
     def get_object(self):
-        # Make accessing a non-existent object produce an error
-        try:
-            return self.request.user.shipping_address
-        except ShippingAddress.DoesNotExist:
-            raise NotFound({"detail": "Not found."})
-
-    def perform_create(self, serializer):
-        # Set user field to this user by default
-        return serializer.save(user=self.request.user)
+        return get_object_or_404(ShippingAddress, user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         # Report that user can have only one shipping address
-        if getattr(request.user, "shipping_address", None):
+        if ShippingAddress.objects.filter(user=self.request.user):
             return Response(
                 {"detail": "User can have only 1 shipping address!"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        # Set user field to this user by default
+        return serializer.save(user=self.request.user)
 
 
 class ProfileCRUDView(
@@ -104,24 +101,20 @@ class ProfileCRUDView(
     serializer_class = ProfileSerializer
 
     def get_object(self):
-        # Make accessing a non-existent object produce an error
-        try:
-            return self.request.user.profile
-        except Profile.DoesNotExist:
-            raise NotFound({"detail": "Not found."})
-
-    def perform_create(self, serializer):
-        # Set user field to this user by default
-        return serializer.save(user=self.request.user)
+        return get_object_or_404(Profile, user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         # Report that user can have only one profile
-        if getattr(request.user, "profile", None):
+        if Profile.objects.filter(user=self.request.user):
             return Response(
                 {"detail": "This user already has a profile!"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        # Set user field to this user by default
+        return serializer.save(user=self.request.user)
 
 
 class WhishItemMixin:

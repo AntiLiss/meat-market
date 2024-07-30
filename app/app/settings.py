@@ -153,14 +153,14 @@ REST_FRAMEWORK = {
 }
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
 CELERY_BEAT_SCHEDULE = {
-    'delete-unpaid-orders-every-hour': {
-        'task': 'orders.tasks.delete_unpaid_orders',
-        'schedule': crontab(minute=0, hour='*/1'),
+    "delete-unpaid-orders-every-hour": {
+        "task": "orders.tasks.delete_unpaid_orders",
+        "schedule": crontab(minute=0, hour="*/1"),
     },
 }
 

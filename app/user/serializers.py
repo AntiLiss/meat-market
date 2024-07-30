@@ -162,7 +162,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             product = self.instance.product
             # If `quantity` not provided when update action then
             # take existing quantity value
-            quantity = attrs.get("quantity") or self.instance.quantity
+            quantity = attrs.get("quantity", self.instance.quantity)
 
         if quantity > product.qty_in_stock:
             error = f"Out of stock! ({quantity} > {product.qty_in_stock})"

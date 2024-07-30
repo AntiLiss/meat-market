@@ -29,16 +29,35 @@ def restore_product_quantity(sender, instance, **kwargs):
     product.save()
 
 
+# A version that solves `n+1 query` problem
+# @receiver(post_delete, sender=Order)
+# def restore_product_quantity(sender, instance, **kwargs):
+#     """
+#     Restore the product quantity if not paid order is deleted/canceled
+#     (with it's order items)
+#     """
+#     # Skip restoring if the order is paid
+#     if instance.is_paid:
+#         return
+#     order_items = instance.order_items.all().select_related("product")
+#     for order_item in order_items:
+#         product = order_item.product
+#         product.qty_in_stock += order_item.quantity
+#         product.save()
+
+
 @receiver(post_save, sender=Order)
 def create_order_items(sender, instance, created, **kwargs):
     """Create order items for just created order"""
     if not created:
         return
 
-    user = instance.user
+    # cart_items = instance.user.cart.cart_items.all()
+    # Modification to avoid n+1 query problem
+    cart_items = instance.user.cart.cart_items.all().select_related("product")
     out_stock_errors = {}
     # Create order items based on cart items
-    for item in user.cart.cart_items.all():
+    for item in cart_items:
         # Collect out of stock errors, if present
         if item.quantity > item.product.qty_in_stock:
             out_stock_errors[item.product.name] = (

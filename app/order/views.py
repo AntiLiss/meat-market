@@ -121,8 +121,7 @@ class PaymentCreateView(APIView):
         ).data
 
         # Delete existing pending payment for the order, if present
-        if Payment.objects.filter(order=order):
-            Payment.objects.filter(order=order).delete()
+        Payment.objects.filter(order=order).delete()
         # Create Payment model instance
         Payment.objects.create(order=order, amount=order.total)
         return Response(yookassa_confirmation_url, status=201)
