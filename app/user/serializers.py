@@ -61,7 +61,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ("user",)
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
+class UserCredentialsSerializer(serializers.ModelSerializer):
     """User credentials serializer for register"""
 
     class Meta:
@@ -73,17 +73,25 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        """Create user with hashing password"""
         return get_user_model().objects.create_user(**validated_data)
 
+    def update(self, instance, validated_data):
+        """Update user with hashing password"""
+        password = validated_data.pop("password", None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
-class UserSerializer(UserRegisterSerializer):
+
+class UserSerializer(UserCredentialsSerializer):
     """Detailed user serializer"""
 
     profile = ProfileSerializer()
     shipping_address = ShippingAddressSerializer()
 
-    class Meta(UserRegisterSerializer.Meta):
-        fields = UserRegisterSerializer.Meta.fields + ("profile", "shipping_address")
+    class Meta(UserCredentialsSerializer.Meta):
+        fields = UserCredentialsSerializer.Meta.fields + ("profile", "shipping_address")
 
 
 class WishItemSerializer(serializers.ModelSerializer):

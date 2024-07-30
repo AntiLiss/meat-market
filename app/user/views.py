@@ -7,7 +7,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authentication import TokenAuthentication
 from .serializers import (
     UserSerializer,
-    UserRegisterSerializer,
+    UserCredentialsSerializer,
     AuthTokenSeralizer,
     ShippingAddressSerializer,
     ProfileSerializer,
@@ -22,7 +22,7 @@ from .models import Profile, ShippingAddress, WishItem, CartItem
 class RegisterUserView(CreateAPIView):
     """Manage user creation"""
 
-    serializer_class = UserRegisterSerializer
+    serializer_class = UserCredentialsSerializer
 
 
 class ObtainTokenView(ObtainAuthToken):
@@ -53,7 +53,7 @@ class CredentialsReadUpdateView(
 
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [TokenAuthentication]
-    serializer_class = UserRegisterSerializer
+    serializer_class = UserCredentialsSerializer
 
     def get_object(self):
         return self.request.user
