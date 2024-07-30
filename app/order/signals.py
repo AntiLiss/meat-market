@@ -72,7 +72,7 @@ def create_order_items(sender, instance, created, **kwargs):
 
     if out_stock_errors:
         error = {
-            "detail": "The quantity of ordered items exceeds product quantity in stock",
+            "detail": "Quantity of ordered items exceeds product quantity in stock",
             "products": out_stock_errors,
         }
         instance.delete()
