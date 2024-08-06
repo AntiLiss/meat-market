@@ -152,6 +152,11 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
 }
 
+SPECTACULAR_SETTINGS = {
+    # This lets to use file input in swagger
+    "COMPONENT_SPLIT_REQUEST": True,
+}
+
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"

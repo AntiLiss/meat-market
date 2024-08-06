@@ -16,9 +16,23 @@ def generate_product_image_path(instance, filename):
 
 def validate_unique_keys(value):
     """Check if product property keys are unique"""
-    keys = [k.lower() for k in value]
-    if len(keys) != len(set(keys)):
-        duplicating_keys = set([k for k in keys if keys.count(k) > 1])
+    # Version 1
+    # keys = [k.lower() for k in value]
+    # if len(keys) != len(set(keys)):
+    #     duplicating_keys = set([k for k in keys if keys.count(k) > 1])
+    #     raise ValidationError(f"Property key duplication: {duplicating_keys}")
+
+    # Version 2
+    counts = {}
+    for k in value:
+        counts[k.lower()] = counts.get(k.lower(), 0) + 1
+
+    duplicating_keys = []
+    for k in counts:
+        if counts[k] > 1:
+            duplicating_keys.append(k)
+
+    if duplicating_keys:
         raise ValidationError(f"Property key duplication: {duplicating_keys}")
 
 
