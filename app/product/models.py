@@ -66,9 +66,11 @@ class Product(models.Model):
         validators=[validate_unique_keys],
         verbose_name="Дополнительные свойства",
     )
-    rating = models.FloatField(
+    rating = models.DecimalField(
         blank=True,
         default=0,
+        max_digits=2,
+        decimal_places=1,
         validators=[MinValueValidator(0), MaxValueValidator(5)],
     )
     price = models.DecimalField(
